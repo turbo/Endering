@@ -2,55 +2,45 @@ inspect = require "inspect"
 
 class Enderer
   dict = {}
-  state: {}
 
-  new: =>
-    for w in io.lines("words")
-      dict[w] = true
+  current: ""
+  verbatim: false
+  blacklist: {}
+
+  new: => dict[w] = true for w in io.lines("words")
 
   guess: (w, bl=nil) =>
-    @state =
-      input: w
-      current: w
-      clength: w\len!
-      verbatim: false
-      blacklist: {}
+    @current = w
 
-    if bl
-      for w in *bl
-        @state.blacklist[w] = true
-
+    if bl then @blacklist[wi] = true for wi in *bl
+    @verbatim = @try!
     b = @run!
 
     if b
-      @state.current
-    elseif @state.verbatim
-      @state.input
+      @current
+    elseif @verbatim
+      w
     else
-      "<impossible> (stopped at: #{@state.current})"
+      "<impossible> (stopped at: #{@current})"
 
-  try: => not @state.blacklist[@state.current] and dict[@state.current] 
+  try: => not @blacklist[@current] and dict[@current] 
 
-  set: (w) =>
-    @state.current = w
-    @state.clength = w\len!
-
-  cutoff: (s) =>
-    @set @state.current\sub 1, (@state.clength - s\len!)
+  cutoff: (s) => 
+    @current = @current\sub 1, (@current\len! - s\len!)
     true
 
   qend: (s) =>
-    q = @state.current\sub (@state.clength - s\len! + 1)
+    q = @current\sub (@current\len! - s\len! + 1)
     q == s and q or nil
 
   nth: (n) =>
-    r = @state.current\reverse!
+    r = @current\reverse!
     r\sub(n, n)
 
   qnth: (s, n) => s == @nth n
 
   add: (s) => 
-    @state.current ..= s
+    @current ..= s
     true
 
   inset: (s, c) =>
@@ -130,8 +120,6 @@ class Enderer
     false
 
   run: =>
-    @state.verbatim = @try!
-    
     return @try! if @qec "n't"
     return @try! if @qec "'s"
 
