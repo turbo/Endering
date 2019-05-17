@@ -34,8 +34,8 @@ class Enderer
     q == s and q or nil
 
   nth: (n) =>
-    r = @current\reverse!
-    r\sub(n, n)
+    s = @current\len! - n + 1
+    @current\sub(s, s)
 
   qnth: (s, n) => s == @nth n
 
