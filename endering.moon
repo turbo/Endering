@@ -70,11 +70,7 @@ class Enderer
 
   torta: (s) => @try! or @tryadd(s)
 
-  advly: =>
-    unless @qnth "i", 1
-      return @torta "le"
-
-    @tryexch("i", "y")
+  advly: => (not @qnth("i", 1) and @torta("le")) or @tryexch("i", "y")
 
   possa: =>
     if @qnth "i", 2
@@ -108,10 +104,7 @@ class Enderer
     elseif @nth(1) == @nth(2)
       (@liquid(@nth(1)) and @try!) or @trycut(@nth(1))
     elseif @vowel @nth 2
-      if @vowel @nth 3
-        @noeadde!
-      else
-        @tryadd "e"
+      @vowel(@nth(3)) and @noeadde! or @tryadd("e")
     else
       if @liquid @nth 1
         (@qend("rl") and @try!) or (@tryadd("e"))
@@ -129,11 +122,12 @@ class Enderer
       @tryadd "e"
 
   gensuf: =>
-    -- snip
-    unless @qec("ing") or @qec("ed") or @qec("en") or @qec("er") or @qec("est")
-      false
-    else
-      @vowel(@nth(1)) and @sufvow! or @sufcons!
+    snip = { "ing", "ed", "en", "er", "est" }
+    for nd in *snip
+      if @qec nd
+        return @vowel(@nth(1)) and @sufvow! or @sufcons!
+
+    false
 
   run: =>
     @state.verbatim = @try!
