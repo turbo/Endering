@@ -37,6 +37,9 @@ prettily -> pretty
 ran -> ran
 running -> run
 run -> run
+someone's -> someone
+pleased -> please
+robbed -> rob
 ```
 
 Backtracking occurs on e.g. "patrolling" ("patroll" is rejected, same path that is valid for e.g. "roll(ing)").
@@ -51,7 +54,7 @@ nobly -> nob
 You might have expected "knife" and "noble". However, 
 
 - "knives" will become "knive", since "knive" is a valid word in our dictionary (a less common alt. to "knife")
-- "nobly" will become "nob" (british slang for a noble person). As such, "nobly" is the adverbial form (to "be like a nob") of "nob" rather than of "noble".
+- "nobly" will become "nob" (british slang for a noble person - very much not to be confused with "knob"). As such, "nobly" is the adverbial form (to "be like a nob") of "nob" rather than of "noble".
 
 We can fix this by removing those weird words. This shows that this is not a bug in the analyser:
 

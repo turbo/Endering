@@ -209,6 +209,9 @@ tcc {
   "ran"
   "running"
   "run"
+  "someone's"
+  "pleased"
+  "robbed"
 }
 
 -- Now a practical demonstration of why "technically correct"
