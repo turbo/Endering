@@ -37,6 +37,7 @@ class Enderer
 
   cutoff: (s) =>
     @set @state.current\sub 1, (@state.clength - s\len!)
+    true
 
   qend: (s) =>
     q = @state.current\sub (@state.clength - s\len! + 1)
@@ -48,133 +49,102 @@ class Enderer
 
   qnth: (s, n) => s == @nth n
 
-  add: (s) => @state.current ..= s
+  add: (s) => 
+    @state.current ..= s
+    true
 
-  vowel: (s) =>
-    return switch s
-      when "a", "e", "i", "o", "u", "y" then true
-      else false
+  inset: (s, c) =>
+    for i in *s
+      return true if i == c
+    false
 
-  liquid: (s) =>
-    return switch s
-      when "l", "r", "s", "v", "z" then true
-      else false 
+  vowel: (s) => @inset { "a", "e", "i", "o", "u", "y" }, s
 
-  noend: (s) =>
-    return switch s
-      when "c", "g", "s", "v", "z" then true
-      else false
+  liquid: (s) => @inset { "l", "r", "s", "v", "z" }, s
+
+  noend: (s) => @inset { "c", "g", "s", "v", "z" }, s
+
+  qec: (s) => @qend(s) and @cutoff(s)
+
+  exchs: (r, a) => @cutoff(r) and @add(a)
+
+  torta: (s) => @try! or @tryadd(s)
+
+  advly: =>
+    unless @qnth "i", 1
+      return @torta "le"
+
+    @tryexch("i", "y")
+
+  possa: =>
+    if @qnth "i", 2
+      @tryexch "ie", "y"
+    elseif @qnth "h", 2
+      @cutoff "e" unless @qnth "t", 3
+      @try!
+    elseif @qnth "x", 2
+      @trycut "e"
+    elseif @qnth("s", 2) or @qnth("z", 2)
+      @cutoff "e" if @qnth("s", 3) or @qnth("z", 3)
+      @try!
+    elseif @qnth "v", 2
+      @try! or @tryexch("ve", "fe")
+    else
+      @try!
+
+  noeadde: => 
+    @add "e" if @noend @nth 1
+    @try!
+
+  tryadd: (s) => @add(s) and @try!
+
+  tryexch: (r, a) => @exchs(r, a) and @try!
+
+  trycut: (s) => @cutoff(s) and @try!
+
+  sufcons: =>
+    if @qnth "h", 1
+      (not @qnth("t", 2) and @try!) or @torta("e")
+    elseif @nth(1) == @nth(2)
+      (@liquid(@nth(1)) and @try!) or @trycut(@nth(1))
+    elseif @vowel @nth 2
+      if @vowel @nth 3
+        @noeadde!
+      else
+        @tryadd "e"
+    else
+      if @liquid @nth 1
+        (@qend("rl") and @try!) or (@tryadd("e"))
+      else
+        @noeadde!
+
+  sufvow: =>
+    if @qec "i"
+      @tryadd "y"
+    elseif @qnth "y", 1
+      @try!
+    elseif @qnth "e", 1
+      (@qnth("e", 2) and @try!) or @torta("e")
+    else
+      @tryadd "e"
+
+  gensuf: =>
+    -- snip
+    unless @qec("ing") or @qec("ed") or @qec("en") or @qec("er") or @qec("est")
+      false
+    else
+      @vowel(@nth(1)) and @sufvow! or @sufcons!
 
   run: =>
     @state.verbatim = @try!
     
-    if co = @qend "n't"
-      @cutoff co
-      return @try!
+    return @try! if @qec "n't"
+    return @try! if @qec "'s"
 
-    if co = @qend "'s"
-      @cutoff co
-      return @try!
-
-    cta = false
-    if co = @qend "'"
-      @cutoff co
-      cta = true
-
-    if cta or @qend("s")
-      @cutoff "s"
-      return @try! unless @qnth "e", 1
-
-      if @qnth "i", 2
-        @cutoff "ie"
-        @add "y"
-        return @try!
-      elseif @qnth "h", 2
-        @cutoff "e" unless @qnth "t", 3
-        return @try!
-      elseif @qnth "x", 2
-        @cutoff "e"
-        return @try!
-      elseif @qnth("s", 2) or @qnth("z", 2)
-        @cutoff "e" if @qnth("s", 3) or @qnth("z", 3)
-        return @try!
-      elseif @qnth "v", 2
-        return true if @try!
-        @cutoff "ve"
-        @add "fe"
-        return @try!
-      else
-        return @try!
-    elseif co = @qend "ly"
-      @cutoff co
-      unless @qnth "i", 1
-        return true if @try!
-        @add "le"
-        return @try!
-      else
-        @cutoff "i"
-        @add "y"
-        return @try!
+    if @qec("'") or @qec("s")
+      @qend("e") and @possa! or @try!
     else
-      -- snip
-      if co = @qend "ing"
-        @cutoff co
-      elseif co = @qend "ed"
-        @cutoff co
-      elseif co = @qend "en"
-        @cutoff co
-      elseif co = @qend "er"
-        @cutoff co
-      elseif co = @qend "est"
-        @cutoff co
-      else
-        return false
-
-      if @vowel @nth 1
-        if @qnth "i", 1
-          @cutoff "i"
-          @add "y"
-          return @try!
-        elseif @qnth "y", 1
-          return @try!
-        elseif @qnth "e", 1
-          if @qnth "e", 2
-            return @try!
-          else
-            return true if @try!
-            @add "e"
-            return @try!
-        else
-          @add "e"
-          return @try!
-      else -- consonant (liquid, noendc)
-        if @qnth "h", 1
-          unless @qnth "t", 2
-            return @try!
-          else
-            return true if @try!
-            @add "e"
-            return @try!
-        elseif @nth(1) == @nth(2)
-          if @liquid @nth 1
-            return true if @try!
-          @cutoff @nth 1
-          return @try!
-        elseif @vowel @nth 2
-          if @vowel @nth 3
-            @add "e" if @noend @nth 1
-            return @try!
-          else
-            @add "e"
-            return @try!
-        else
-          if @liquid @nth 1
-            return @try! if @qend "rl"
-            @add "e"
-            return @try!
-          else
-            @add "e" if @noend @nth 1
-            return @try!
+      @qec("ly") and @advly! or @gensuf!
 
 
 ti = Enderer!
@@ -210,8 +180,11 @@ tcc {
   "running"
   "run"
   "someone's"
+  "someones"
+  "someones'"
   "pleased"
   "robbed"
+  "gunned"
 }
 
 -- Now a practical demonstration of why "technically correct"
