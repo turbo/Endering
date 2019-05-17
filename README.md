@@ -69,3 +69,11 @@ yields
 knives -> knife
 nobly -> noble
 ```
+
+## Run It
+
+```bash
+# luarocks install moonscript
+moonc .
+luajit endering.lua
+```
